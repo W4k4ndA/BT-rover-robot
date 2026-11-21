@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ESP32 Rover</string>
+
+    <!-- Header & Status -->
+    <string name="brand_subtitle">ROVER-MK1 // SPP</string>
+    <string name="bt_status_disconnected">SIN CONEXIÓN</string>
+    <string name="bt_status_connecting">ENLAZANDO…</string>
+    <string name="bt_status_connected">ENLAZADO</string>
+    <string name="bt_connect_button">CONECTAR BT</string>
+    <string name="bt_disconnect_button">DESCONECTAR</string>
+
+    <!-- Battery HUD -->
+    <string name="battery_rover_label">BAT. ROVER</string>
+    <string name="battery_controller_label">MANDO</string>
+    <string name="battery_waiting">--%</string>
+    <string name="battery_no_telemetry">SIN TELEMETRÍA</string>
+    <string name="battery_charging">CARGANDO</string>
+
+    <!-- Motor Telemetry -->
+    <string name="motor_left_label">MOTOR IZQ</string>
+    <string name="motor_right_label">MOTOR DER</string>
+    <string name="motor_dir_fwd">AVANCE</string>
+    <string name="motor_dir_rev">REVERSA</string>
+    <string name="motor_dir_idle">DETENIDO</string>
+    <string name="tx_console_label">TRAMA TX</string>
+    <string name="rx_console_label">ÚLTIMO RX</string>
+    <string name="rx_none">ESPERANDO DATOS ESP32…</string>
+
+    <!-- Joystick Directions -->
+    <string name="joy_fwd">ADELANTE</string>
+    <string name="joy_rev">ATRÁS</string>
+    <string name="joy_left">IZQ</string>
+    <string name="joy_right">DER</string>
+    <string name="joy_hint_drag">DESLIZA PARA CONDUCIR</string>
+
+    <!-- Tactical Controls -->
+    <string name="power_mode_eco">50% ECO</string>
+    <string name="power_mode_sport">75% SPORT</string>
+    <string name="power_mode_turbo">100% TURBO</string>
+    <string name="btn_emergency_stop">PARO</string>
+    <string name="btn_protocol_terminal">ESP32</string>
+
+    <!-- Bluetooth Sheet -->
+    <string name="bt_sheet_title">ENLACE BLUETOOTH CLASSIC</string>
+    <string name="bt_sheet_subtitle">Selecciona tu módulo ESP32-WROOM-32 (SPP)</string>
+    <string name="bt_scan_action">ESCANEAR</string>
+    <string name="bt_scanning">ESCANEANDO…</string>
+    <string name="bt_paired_section">DISPOSITIVOS VINCULADOS</string>
+    <string name="bt_discovered_section">DISPOSITIVOS DETECTADOS</string>
+    <string name="bt_empty_paired">No hay dispositivos vinculados. Vincula tu ESP32 o presiona Escanear.</string>
+    <string name="bt_permission_needed">Se requieren permisos de Bluetooth para buscar y conectar con el ESP32.</string>
+    <string name="bt_grant_permission">CONCEDER PERMISOS</string>
+    <string name="bt_enable_prompt">El adaptador Bluetooth está desactivado.</string>
+    <string name="bt_enable_action">ACTIVAR BLUETOOTH</string>
+    <string name="bt_unsupported">Este dispositivo no cuenta con adaptador Bluetooth Classic.</string>
+    <string name="bt_esp32_badge">ESP32</string>
+
+    <!-- Protocol & Terminal Sheet -->
+    <string name="protocol_sheet_title">CONSOLA Y PROTOCOLO ESP32</string>
+    <string name="protocol_pwm_max">ESCALA PWM MÁXIMA</string>
+    <string name="protocol_format_label">FORMATO DE COMANDO</string>
+    <string name="protocol_rx_format_hint">Telemetría soportada desde ESP32: BAT:85, B:85 o V:7.8</string>
+    <string name="protocol_log_title">REGISTRO SERIAL EN VIVO</string>
+    <string name="protocol_test_ping">ENVIAR PING DE PARO</string>
+    <string name="protocol_arduino_title">CÓDIGO DE REFERENCIA ESP32-WROOM-32</string>
+
+    <!-- Content Descriptions -->
+    <string name="cd_bluetooth_icon">Estado de conexión Bluetooth</string>
+    <string name="cd_battery_icon">Indicador de batería en tiempo real</string>
+    <string name="cd_joystick">Joystick virtual de control direccional</string>
+    <string name="cd_emergency_stop">Paro de emergencia inmediato</string>
+    <string name="cd_protocol_settings">Configuración de protocolo y consola ESP32</string>
+    <string name="cd_close_sheet">Cerrar panel</string>
+</resources>

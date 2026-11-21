@@ -1,0 +1,6 @@
+{
+  "name": "ESP32 Rover",
+  "description": "Controlador Bluetooth Classic futurista con joystick virtual diferencial y telemetría de batería en tiempo real para carrito ESP32-WROOM-32.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
