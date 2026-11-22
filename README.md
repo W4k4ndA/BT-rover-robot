@@ -43,12 +43,12 @@ Sistema completo de robótica móvil compuesto por una **aplicación móvil Andr
 
 | Función | Pin ESP32-WROOM-32 | Tipo / Canal LEDC | Pin Puente H (L298N) |
 | :--- | :---: | :---: | :--- |
-| 🛞 Motor Izquierdo Dirección A | `D13` (`GPIO 13`) | Digital `OUTPUT` | `IN1` |
-| 🛞 Motor Izquierdo Dirección B | `D12` (`GPIO 12`) | Digital `OUTPUT` | `IN2` |
-| ⚡ Motor Izquierdo Velocidad | `D26` (`GPIO 26`) | PWM Canal `0` (`LEDC`) | `ENA` *(retirar jumper)* |
-| 🛞 Motor Derecho Dirección A | `D14` (`GPIO 14`) | Digital `OUTPUT` | `IN3` |
-| 🛞 Motor Derecho Dirección B | `D27` (`GPIO 27`) | Digital `OUTPUT` | `IN4` |
-| ⚡ Motor Derecho Velocidad | `D25` (`GPIO 25`) | PWM Canal `1` (`LEDC`) | `ENB` *(retirar jumper)* |
+| 🛞 Motor Derecho Dirección A | `D13` (`GPIO 13`) | Digital `OUTPUT` | `IN1` |
+| 🛞 Motor Derecho Dirección B | `D12` (`GPIO 12`) | Digital `OUTPUT` | `IN2` |
+| ⚡ Motor Derecho Velocidad | `D26` (`GPIO 26`) | PWM Canal `0` (`LEDC`) | `ENA` *(retirar jumper)* |
+| 🛞 Motor Izquierdo Dirección A | `D14` (`GPIO 14`) | Digital `OUTPUT` | `IN3` |
+| 🛞 Motor Izquierdo Dirección B | `D27` (`GPIO 27`) | Digital `OUTPUT` | `IN4` |
+| ⚡ Motor Izquierdo Velocidad | `D25` (`GPIO 25`) | PWM Canal `1` (`LEDC`) | `ENB` *(retirar jumper)* |
 | 🔋 Sensor Batería (Divisor `100kΩ / 47kΩ`) | `D34` (`GPIO 34`) | `ADC1_CH6` | Punto medio del divisor resistivo |
 | 💡 LED Estado Bluetooth | `D2` (`GPIO 2`) | Digital `OUTPUT` | LED integrado en la placa DevKit |
 
@@ -67,7 +67,7 @@ Sistema completo de robótica móvil compuesto por una **aplicación móvil Andr
    pio device monitor
    ```
 3. Verifica en el monitor serial que aparezca:
-   `[BT] Listo. Empareja y conecta a "ESP32_ROVER"` y `[LEDC] 4 canales @ 2000 Hz, 10 bits`.
+   `[BT] Listo. Empareja y conecta a "ESP32_ROVER"` y `[LEDC] 2 canales (ENA/ENB) @ 2000 Hz, 10 bits`.
 
 ### Paso 2: Compilar e instalar la App Android
 1. Abre el proyecto raíz en Android Studio / AI Studio o compila vía Gradle:

@@ -68,6 +68,32 @@ class RoverLogicTest {
     }
 
     @Test
+    fun `joystick diagonal forward-left turns left (right wheel faster forward)`() {
+        val cmd = DifferentialDriveCalculator.calculate(
+            joyX = -0.5f,
+            joyY = 0.7f,
+            maxPwm = 255,
+            powerMultiplier = 1f,
+            format = CommandFormatPreset.L_R_COLON,
+        )
+        assertTrue(cmd.leftSpeed > 0 && cmd.rightSpeed > 0)
+        assertTrue(cmd.leftSpeed < cmd.rightSpeed)
+    }
+
+    @Test
+    fun `joystick diagonal backward-left curves rear left (right wheel faster backward)`() {
+        val cmd = DifferentialDriveCalculator.calculate(
+            joyX = -0.5f,
+            joyY = -0.7f,
+            maxPwm = 255,
+            powerMultiplier = 1f,
+            format = CommandFormatPreset.L_R_COLON,
+        )
+        assertTrue(cmd.leftSpeed < 0 && cmd.rightSpeed < 0)
+        assertTrue(kotlin.math.abs(cmd.leftSpeed) < kotlin.math.abs(cmd.rightSpeed))
+    }
+
+    @Test
     fun `joystick inside deadzone stops both motors`() {
         val cmd = DifferentialDriveCalculator.calculate(
             joyX = 0.03f,

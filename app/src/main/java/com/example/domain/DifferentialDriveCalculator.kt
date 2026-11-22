@@ -48,8 +48,14 @@ object DifferentialDriveCalculator {
         val normX = (clampedX / magnitude) * effectiveMag
         val normY = (clampedY / magnitude) * effectiveMag
 
-        var leftMix = normY + normX
-        var rightMix = normY - normX
+        // En reversa clara (normY < -0.15f) invertimos el eje X (estilo automóvil):
+        // al mover el joystick en diagonal abajo-izquierda, la parte trasera del robot
+        // gira hacia la izquierda (la rueda derecha retrocede más rápido que la izquierda).
+        // En giro puro sobre el eje (|normY| <= 0.15f) se conserva la rotación directa.
+        val effectiveX = if (normY < -0.15f) -normX else normX
+
+        var leftMix = normY + effectiveX
+        var rightMix = normY - effectiveX
 
         // Normalización proporcional: si la suma (normY + normX) supera 1.0,
         // dividimos ambos canales por el máximo para conservar la relación de giro

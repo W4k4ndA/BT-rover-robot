@@ -71,7 +71,7 @@ void loop() {
     if (lIdx >= 0 && rIdx > lIdx) {
       int l = cmd.substring(lIdx + 2, rIdx).toInt();
       int r = cmd.substring(rIdx + 3).toInt();
-      // IN1/IN2 + ENA (ch 0) para izq; IN3/IN4 + ENB (ch 1) para der
+      // IN3/IN4 + ENB (ch 1) para izq; IN1/IN2 + ENA (ch 0) para der
     }
   }
   // Telemetría cada 1s: SerialBT.printf("BAT:%d,V:%.2f\n", pct, v);
