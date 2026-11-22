@@ -56,10 +56,13 @@ static constexpr const char* BT_DEVICE_NAME = "ESP32_ROVER";
 //   del L298N son entradas de alta impedancia y normalmente arrancan sin problema;
 //   sin embargo, si al cargar código por USB ves un error de arranque/flash,
 //   desconecta temporalmente D12 durante el flasheo.
-static constexpr uint8_t PIN_IN1 = 13; // D13 -> Dirección A Motor Izquierdo
-static constexpr uint8_t PIN_IN2 = 12; // D12 -> Dirección B Motor Izquierdo
+static constexpr uint8_t PIN_IN2 = 13; // D13 -> Dirección A Motor Izquierdo
+static constexpr uint8_t PIN_IN1 = 12; // D12 -> Dirección B Motor Izquierdo
+                                       //Intercambiamos con respecto al circuito porque giraba al reves.
+
 static constexpr uint8_t PIN_IN3 = 14; // D14 -> Dirección A Motor Derecho
 static constexpr uint8_t PIN_IN4 = 27; // D27 -> Dirección B Motor Derecho
+
 static constexpr uint8_t PIN_ENA = 26; // D26 -> Canal 0 LEDC (Velocidad Motor Izquierdo)
 static constexpr uint8_t PIN_ENB = 25; // D25 -> Canal 1 LEDC (Velocidad Motor Derecho)
 
@@ -109,8 +112,8 @@ static constexpr uint16_t TT_MIN_START_DUTY = 220;
 //   V_bat ---> [ R1 = 100 kOhm ] ---> GPIO 34 ---> [ R2 = 47 kOhm ] ---> GND
 //   Factor = (R1 + R2) / R2 = (100 + 47) / 47 = 3.1276
 //   Con 8.4V en batería, en el GPIO 34 habrá 2.68V (seguro, < 3.3V).
-static constexpr float DIVIDER_R1_KOHM = 100.0f;
-static constexpr float DIVIDER_R2_KOHM = 47.0f;
+static constexpr float DIVIDER_R1_KOHM = 97.9f; //valor real medido de la resistencia de 100k
+static constexpr float DIVIDER_R2_KOHM = 46.2f; //valor real medido de la resistencia de 47k
 static constexpr float BATTERY_DIVIDER_FACTOR =
     (DIVIDER_R1_KOHM + DIVIDER_R2_KOHM) / DIVIDER_R2_KOHM;
 
