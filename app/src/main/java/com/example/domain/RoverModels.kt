@@ -3,6 +3,10 @@ package com.example.domain
 import androidx.annotation.StringRes
 import com.example.R
 
+/**
+ * Formatos ASCII soportados para enviar las velocidades izquierda/derecha al ESP32.
+ * Permite adaptar la app a distintos firmwares sin recompilar el carrito.
+ */
 enum class CommandFormatPreset(
     val id: String,
     val displayPattern: String,
@@ -26,6 +30,9 @@ enum class CommandFormatPreset(
     }
 }
 
+/**
+ * Limitadores de potencia máxima para conducción segura en interiores (ECO) o máxima velocidad (TURBO).
+ */
 enum class PowerMode(
     val id: String,
     @StringRes val labelRes: Int,
@@ -41,6 +48,7 @@ enum class PowerMode(
     }
 }
 
+/** Resultado del mezclador diferencial listo para transmitir por Bluetooth Classic. */
 data class MotorCommand(
     val leftSpeed: Int,
     val rightSpeed: Int,
@@ -52,6 +60,7 @@ data class MotorCommand(
     }
 }
 
+/** Máquina de estados del enlace Bluetooth Classic (RFCOMM/SPP). */
 sealed interface BluetoothConnectionState {
     data object Disconnected : BluetoothConnectionState
     data class Connecting(val deviceName: String, val address: String) : BluetoothConnectionState
@@ -59,6 +68,7 @@ sealed interface BluetoothConnectionState {
     data class Error(val message: String) : BluetoothConnectionState
 }
 
+/** Representación en UI de un dispositivo Bluetooth vinculado o detectado en escaneo. */
 data class BluetoothDeviceUi(
     val name: String,
     val address: String,
@@ -66,6 +76,7 @@ data class BluetoothDeviceUi(
     val isEspLikely: Boolean,
 )
 
+/** Estado combinado de batería en tiempo real: telemetría del ESP32 y batería del teléfono. */
 data class BatteryTelemetry(
     val roverPercent: Int? = null,
     val roverVoltage: Float? = null,
@@ -74,6 +85,7 @@ data class BatteryTelemetry(
     val isPhoneCharging: Boolean = false,
 )
 
+/** Registro individual TX/RX mostrado en la consola serial en vivo. */
 data class SerialLogEntry(
     val id: Long,
     val timestamp: String,

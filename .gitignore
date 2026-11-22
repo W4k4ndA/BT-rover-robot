@@ -16,3 +16,5 @@
 local.properties
 .env
 debug.keystore
+firmware_esp32/.pio/
+firmware_esp32/.vscode/

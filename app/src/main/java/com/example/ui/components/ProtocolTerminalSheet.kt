@@ -76,6 +76,11 @@ void loop() {
   // Telemetría cada 1s: SerialBT.printf("BAT:%d,V:%.2f\n", pct, v);
 }"""
 
+/**
+ * Consola técnica modal del protocolo ESP32:
+ * Permite ajustar la escala PWM (±255 o ±100), elegir el formato de trama,
+ * inspeccionar el registro TX/RX en vivo y copiar el código base para PlatformIO/ESP32.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProtocolTerminalSheet(

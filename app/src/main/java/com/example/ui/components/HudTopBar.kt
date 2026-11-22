@@ -56,6 +56,12 @@ import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.TitaniumBezel
 import java.util.Locale
 
+/**
+ * Barra superior de telemetría (HUD):
+ * - Identidad del controlador (ESP32 ROVER).
+ * - Botón de conexión Bluetooth con LED de estado animado.
+ * - Cápsula de batería en tiempo real (barra segmentada del Rover + batería del teléfono).
+ */
 @Composable
 fun HudTopBar(
     connectionState: BluetoothConnectionState,

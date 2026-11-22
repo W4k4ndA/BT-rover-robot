@@ -37,6 +37,11 @@ import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.TitaniumBezel
 import kotlin.math.abs
 
+/**
+ * Panel de telemetría de tracción:
+ * - Medidores individuales con barra neón bidireccional para Motor Izquierdo y Derecho.
+ * - Tira de monitoreo en vivo que muestra la trama exacta enviada (TX) y la última respuesta (RX).
+ */
 @Composable
 fun TelemetryDeck(
     motorCommand: MotorCommand,

@@ -57,6 +57,11 @@ import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.TitaniumBezel
 
+/**
+ * Panel inferior modal para gestionar el enlace Bluetooth Classic (SPP):
+ * - Verifica hardware, permisos en tiempo de ejecución y estado del adaptador.
+ * - Lista dispositivos vinculados destacando módulos ESP32 y permite escanear cercanos.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BluetoothDeviceSheet(

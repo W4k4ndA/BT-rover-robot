@@ -21,6 +21,10 @@ data class RoverPreferences(
     val lastDeviceAddress: String? = null,
 )
 
+/**
+ * Repositorio local basado en Jetpack DataStore para recordar entre sesiones
+ * la escala PWM, el formato de trama, el modo de potencia y la última dirección MAC del ESP32.
+ */
 class PreferencesRepository(private val context: Context) {
 
     private object Keys {
