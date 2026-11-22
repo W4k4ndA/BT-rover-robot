@@ -15,18 +15,19 @@
  *       Rango esperado desde la app: -255..+255 (configurable en APP_MAX_PWM).
  *
  *    2. Generación de PWM por hardware mediante el periférico LEDC del ESP32:
- *         - 4 canales independientes (Canales 0, 1, 2 y 3) en 4 pines GPIO.
+ *         - 2 canales PWM independientes (Canales 0 y 1) para ENA y ENB.
+ *         - 4 pines digitales de salida (IN1, IN2, IN3, IN4) para el sentido.
  *         - Resolución de 10 bits (rango de ciclo de trabajo: 0 a 1023).
  *         - Frecuencia de 2000 Hz (2 kHz), óptima para motores DC tipo TT
- *           con puentes H comunes (L298N, DRV8833, TB6612FNG, MX1508).
+ *           con puente H L298N.
  *
  *    3. Telemetría de batería en tiempo real (ESP32 -> App Android):
  *         - Lectura calibrada en milivoltios por ADC1 (GPIO 34) con filtro EMA.
  *         - Envío periódico en formato "BAT:<porcentaje>,V:<voltaje>\n".
  *
  *    4. Seguridad (Failsafe):
- *         - Detención inmediata de los 4 canales PWM si se pierde el enlace
- *           Bluetooth o si expira el temporizador Watchdog de comunicación.
+ *         - Detención inmediata de los 2 canales PWM y los 4 pines de dirección
+ *           si se pierde el enlace Bluetooth o expira el Watchdog.
  * ============================================================================
  */
 
@@ -46,17 +47,21 @@
 // Nota: La app destaca automáticamente nombres que contengan "ESP32" o "ROVER".
 static constexpr const char* BT_DEVICE_NAME = "ESP32_ROVER";
 
-// Pines PWM para el puente H (4 señales independientes: 2 por cada motor).
-// Se eligen GPIO 25, 26, 27 y 14 porque son pines seguros de salida (no afectan
-// el arranque/boot del ESP32 ni son pines de solo entrada).
+// Pines para puente H L298N (4 salidas digitales de dirección + 2 PWM Enable):
+//   - Motor Izquierdo: IN1 -> D13, IN2 -> D12, ENA (PWM Canal 0) -> D26
+//   - Motor Derecho:   IN3 -> D14, IN4 -> D27, ENB (PWM Canal 1) -> D25
 //
-// Conexión típica:
-//   - L298N (con jumpers ENA/ENB puestos): IN1->25, IN2->26, IN3->27, IN4->14
-//   - DRV8833 / MX1508:                    AIN1->25, AIN2->26, BIN1->27, BIN2->14
-static constexpr uint8_t PIN_MOTOR_L_FWD = 25; // Canal 0: Motor Izquierdo Adelante
-static constexpr uint8_t PIN_MOTOR_L_REV = 26; // Canal 1: Motor Izquierdo Reversa
-static constexpr uint8_t PIN_MOTOR_R_FWD = 27; // Canal 2: Motor Derecho Adelante
-static constexpr uint8_t PIN_MOTOR_R_REV = 14; // Canal 3: Motor Derecho Reversa
+// NOTA DE HARDWARE SOBRE GPIO 12 (D12):
+//   GPIO 12 es un pin de arranque ("strapping pin") en el ESP32. Los pines IN1..IN4
+//   del L298N son entradas de alta impedancia y normalmente arrancan sin problema;
+//   sin embargo, si al cargar código por USB ves un error de arranque/flash,
+//   desconecta temporalmente D12 durante el flasheo.
+static constexpr uint8_t PIN_IN1 = 13; // D13 -> Dirección A Motor Izquierdo
+static constexpr uint8_t PIN_IN2 = 12; // D12 -> Dirección B Motor Izquierdo
+static constexpr uint8_t PIN_IN3 = 14; // D14 -> Dirección A Motor Derecho
+static constexpr uint8_t PIN_IN4 = 27; // D27 -> Dirección B Motor Derecho
+static constexpr uint8_t PIN_ENA = 26; // D26 -> Canal 0 LEDC (Velocidad Motor Izquierdo)
+static constexpr uint8_t PIN_ENB = 25; // D25 -> Canal 1 LEDC (Velocidad Motor Derecho)
 
 // LED integrado de la placa DevKit v1 (indicador visual de conexión BT)
 static constexpr uint8_t PIN_STATUS_LED  = 2;
@@ -70,11 +75,9 @@ static constexpr uint8_t PIN_BATTERY_ADC = 34;
 // 2. CONFIGURACIÓN DEL DRIVER LEDC (PWM POR HARDWARE)
 // ============================================================================
 
-// Canales LEDC asignados (el ESP32 dispone de 16 canales de PWM por hardware: 0..15)
-static constexpr uint8_t LEDC_CH_L_FWD = 0;
-static constexpr uint8_t LEDC_CH_L_REV = 1;
-static constexpr uint8_t LEDC_CH_R_FWD = 2;
-static constexpr uint8_t LEDC_CH_R_REV = 3;
+// Solo 2 canales LEDC asignados para controlar la velocidad vía ENA y ENB
+static constexpr uint8_t LEDC_CH_ENA = 0;
+static constexpr uint8_t LEDC_CH_ENB = 1;
 
 // Frecuencia PWM de 2000 Hz (2 kHz):
 //   - Los motores TT tienen escobillas e inductancia moderada.
@@ -197,24 +200,32 @@ uint16_t mapAppSpeedTo10BitDuty(int speedMag) {
 }
 
 /**
- * Aplica velocidad con signo a un par de canales LEDC (Adelante / Reversa).
- * Nunca activa ambos canales simultáneamente para evitar cortocircuitos o
- * frenado indeseado en el puente H.
+ * Aplica sentido de giro (pines digitales INx) y velocidad (canal PWM ENA/ENB)
+ * a un motor conectado al puente H L298N.
+ *
+ * Secuencia segura:
+ *   - Al ir hacia adelante (> 0) o reversa (< 0), siempre bajamos primero a LOW
+ *     el pin opuesto antes de subir el otro a HIGH para pasar brevemente por
+ *     estado libre (LOW/LOW) en lugar de freno activo (HIGH/HIGH).
+ *   - Al detener (== 0), cortamos el PWM a 0 y dejamos ambos pines en LOW.
  */
 void driveSingleMotor(int signedSpeed,
-                      uint8_t pinFwd, uint8_t chFwd,
-                      uint8_t pinRev, uint8_t chRev) {
+                      uint8_t pinInA, uint8_t pinInB,
+                      uint8_t pinPwm, uint8_t chPwm) {
     if (signedSpeed > 0) {
         const uint16_t duty = mapAppSpeedTo10BitDuty(signedSpeed);
-        writeLedcDuty(pinRev, chRev, 0);
-        writeLedcDuty(pinFwd, chFwd, duty);
+        digitalWrite(pinInB, LOW);
+        digitalWrite(pinInA, HIGH);
+        writeLedcDuty(pinPwm, chPwm, duty);
     } else if (signedSpeed < 0) {
         const uint16_t duty = mapAppSpeedTo10BitDuty(-signedSpeed);
-        writeLedcDuty(pinFwd, chFwd, 0);
-        writeLedcDuty(pinRev, chRev, duty);
+        digitalWrite(pinInA, LOW);
+        digitalWrite(pinInB, HIGH);
+        writeLedcDuty(pinPwm, chPwm, duty);
     } else {
-        writeLedcDuty(pinFwd, chFwd, 0);
-        writeLedcDuty(pinRev, chRev, 0);
+        writeLedcDuty(pinPwm, chPwm, 0);
+        digitalWrite(pinInA, LOW);
+        digitalWrite(pinInB, LOW);
     }
 }
 
@@ -228,12 +239,12 @@ void applyMotorCommands(int leftSpeed, int rightSpeed) {
     currentLeftCmd  = constrain(leftSpeed, -APP_MAX_PWM, APP_MAX_PWM);
     currentRightCmd = constrain(rightSpeed, -APP_MAX_PWM, APP_MAX_PWM);
 
-    driveSingleMotor(currentLeftCmd,  PIN_MOTOR_L_FWD, LEDC_CH_L_FWD, PIN_MOTOR_L_REV, LEDC_CH_L_REV);
-    driveSingleMotor(currentRightCmd, PIN_MOTOR_R_FWD, LEDC_CH_R_FWD, PIN_MOTOR_R_REV, LEDC_CH_R_REV);
+    driveSingleMotor(currentLeftCmd,  PIN_IN1, PIN_IN2, PIN_ENA, LEDC_CH_ENA);
+    driveSingleMotor(currentRightCmd, PIN_IN3, PIN_IN4, PIN_ENB, LEDC_CH_ENB);
 }
 
 /**
- * Detiene inmediatamente los 4 canales PWM (usado en PARO, desconexión o watchdog).
+ * Detiene inmediatamente ambos canales PWM (ENA/ENB) y los 4 pines de dirección.
  */
 void stopAllMotors() {
     applyMotorCommands(0, 0);
@@ -409,11 +420,19 @@ void setup() {
     analogReadResolution(12);
     analogSetPinAttenuation(PIN_BATTERY_ADC, ADC_11db);
 
-    // Inicializar los 4 canales LEDC en los 4 pines a 2000 Hz y 10 bits (0..1023)
-    setupLedcChannel(PIN_MOTOR_L_FWD, LEDC_CH_L_FWD, PWM_FREQ_HZ, PWM_RESOLUTION_BITS);
-    setupLedcChannel(PIN_MOTOR_L_REV, LEDC_CH_L_REV, PWM_FREQ_HZ, PWM_RESOLUTION_BITS);
-    setupLedcChannel(PIN_MOTOR_R_FWD, LEDC_CH_R_FWD, PWM_FREQ_HZ, PWM_RESOLUTION_BITS);
-    setupLedcChannel(PIN_MOTOR_R_REV, LEDC_CH_R_REV, PWM_FREQ_HZ, PWM_RESOLUTION_BITS);
+    // Configurar los 4 pines digitales de dirección del puente H como salida
+    pinMode(PIN_IN1, OUTPUT);
+    pinMode(PIN_IN2, OUTPUT);
+    pinMode(PIN_IN3, OUTPUT);
+    pinMode(PIN_IN4, OUTPUT);
+    digitalWrite(PIN_IN1, LOW);
+    digitalWrite(PIN_IN2, LOW);
+    digitalWrite(PIN_IN3, LOW);
+    digitalWrite(PIN_IN4, LOW);
+
+    // Inicializar únicamente los 2 canales LEDC para ENA y ENB a 2000 Hz y 10 bits (0..1023)
+    setupLedcChannel(PIN_ENA, LEDC_CH_ENA, PWM_FREQ_HZ, PWM_RESOLUTION_BITS);
+    setupLedcChannel(PIN_ENB, LEDC_CH_ENB, PWM_FREQ_HZ, PWM_RESOLUTION_BITS);
 
     // Garantizar motores completamente detenidos antes de abrir el enlace Bluetooth
     stopAllMotors();
@@ -423,7 +442,7 @@ void setup() {
         Serial.println("[ERROR] Fallo al inicializar Bluetooth Classic SPP.");
     } else {
         Serial.printf("[BT] Listo. Empareja y conecta a \"%s\"\n", BT_DEVICE_NAME);
-        Serial.printf("[LEDC] 4 canales @ %lu Hz, %u bits (duty max = %u)\n",
+        Serial.printf("[LEDC] 2 canales (ENA/ENB) @ %lu Hz, %u bits (duty max = %u)\n",
                       static_cast<unsigned long>(PWM_FREQ_HZ),
                       PWM_RESOLUTION_BITS,
                       PWM_MAX_DUTY);

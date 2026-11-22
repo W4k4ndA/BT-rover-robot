@@ -3,7 +3,7 @@
 [![Platform](https://img.shields.io/badge/Android-Kotlin%20%2B%20Jetpack%20Compose-3DDC84?logo=android&logoColor=white)](#)
 [![MCU](https://img.shields.io/badge/ESP32-WROOM--32%20%7C%20PlatformIO-E7352C?logo=espressif&logoColor=white)](#)
 [![Bluetooth](https://img.shields.io/badge/Protocol-Bluetooth%20Classic%20SPP-0082FC?logo=bluetooth&logoColor=white)](#)
-[![PWM](https://img.shields.io/badge/PWM-LEDC%204ch%20%7C%2010--bit%20%40%202kHz-00F0FF)](#)
+[![PWM](https://img.shields.io/badge/PWM-LEDC%202ch%20%7C%2010--bit%20%40%202kHz-00F0FF)](#)
 
 Sistema completo de robótica móvil compuesto por una **aplicación móvil Android futurista** (estética neón y chasis metálico cepillado) y un **firmware C++ en PlatformIO para ESP32-WROOM-32** comunicados por **Bluetooth Classic (SPP / RFCOMM)**.
 
@@ -24,10 +24,10 @@ Sistema completo de robótica móvil compuesto por una **aplicación móvil Andr
   - **Consola Serial & Modos de Potencia**: Selector `50% ECO`, `75% SPORT`, `100% TURBO`, botón de paro de emergencia (**PARO**) y visor TX/RX en vivo.
 
 - 🧠 **Firmware ESP32 PlatformIO (`firmware_esp32/`)**:
-  - **Driver LEDC por Hardware**: 4 canales independientes (`0..3`) en 4 pines GPIO a **2000 Hz** y **10 bits de resolución (`0..1023`)**, ajustado para motores TT.
+  - **Driver LEDC por Hardware**: 2 canales PWM independientes (`0` y `1`) para `ENA`/`ENB` a **2000 Hz** y **10 bits de resolución (`0..1023`)**, junto a 4 pines digitales (`IN1..IN4`) para controlar el sentido de giro de motores TT en puente H L298N.
   - **Compensación de arranque (*stiction*)**: Mapeo suave desde `TT_MIN_START_DUTY` hasta `1023` para vencer la fricción de los engranajes plásticos a baja velocidad.
   - **Telemetría de batería por `ADC1`**: Lectura calibrada en milivoltios con filtro exponencial (EMA) evitando conflictos con `ADC2` cuando Bluetooth está activo.
-  - **Failsafe / Watchdog**: Detiene los 4 canales PWM al instante ante desconexión Bluetooth o si transcurren más de `1000 ms` sin recibir tramas en movimiento.
+  - **Failsafe / Watchdog**: Detiene los canales PWM y desactiva las salidas de dirección al instante ante desconexión Bluetooth o si transcurren más de `1000 ms` sin recibir tramas en movimiento.
 
 ---
 
@@ -41,16 +41,18 @@ Sistema completo de robótica móvil compuesto por una **aplicación móvil Andr
 
 ## 🔌 Esquema de conexiones (Hardware)
 
-| Función | Pin ESP32-WROOM-32 | Canal LEDC | Driver (L298N* / DRV8833 / MX1508) |
+| Función | Pin ESP32-WROOM-32 | Tipo / Canal LEDC | Pin Puente H (L298N) |
 | :--- | :---: | :---: | :--- |
-| 🛞 Motor Izquierdo Adelante | `GPIO 25` | Canal `0` | `IN1` / `AIN1` |
-| 🛞 Motor Izquierdo Reversa | `GPIO 26` | Canal `1` | `IN2` / `AIN2` |
-| 🛞 Motor Derecho Adelante | `GPIO 27` | Canal `2` | `IN3` / `BIN1` |
-| 🛞 Motor Derecho Reversa | `GPIO 14` | Canal `3` | `IN4` / `BIN2` |
-| 🔋 Sensor Batería (Divisor `100kΩ / 47kΩ`) | `GPIO 34` (`ADC1_CH6`) | — | Punto medio del divisor resistivo |
-| 💡 LED Estado Bluetooth | `GPIO 2` | — | LED integrado en la placa DevKit |
+| 🛞 Motor Izquierdo Dirección A | `D13` (`GPIO 13`) | Digital `OUTPUT` | `IN1` |
+| 🛞 Motor Izquierdo Dirección B | `D12` (`GPIO 12`) | Digital `OUTPUT` | `IN2` |
+| ⚡ Motor Izquierdo Velocidad | `D26` (`GPIO 26`) | PWM Canal `0` (`LEDC`) | `ENA` *(retirar jumper)* |
+| 🛞 Motor Derecho Dirección A | `D14` (`GPIO 14`) | Digital `OUTPUT` | `IN3` |
+| 🛞 Motor Derecho Dirección B | `D27` (`GPIO 27`) | Digital `OUTPUT` | `IN4` |
+| ⚡ Motor Derecho Velocidad | `D25` (`GPIO 25`) | PWM Canal `1` (`LEDC`) | `ENB` *(retirar jumper)* |
+| 🔋 Sensor Batería (Divisor `100kΩ / 47kΩ`) | `D34` (`GPIO 34`) | `ADC1_CH6` | Punto medio del divisor resistivo |
+| 💡 LED Estado Bluetooth | `D2` (`GPIO 2`) | Digital `OUTPUT` | LED integrado en la placa DevKit |
 
-> \* **Nota para L298N:** Deja colocados los *jumpers* en `ENA` y `ENB` para controlar la velocidad directamente con las 4 señales PWM en `IN1..IN4`. Recuerda **unir las tierras (GND)** de la batería de motores, el puente H y el ESP32.
+> \* **Nota para L298N:** Retira los *jumpers* de `ENA` y `ENB` para conectar allí `D26` y `D25` respectivamente. Recuerda **unir las tierras (GND)** de la batería de motores, el puente H y el ESP32. Si al programar el ESP32 por USB con `D12` conectado aparece un error de flasheo, desconecta `IN2` (`D12`) momentáneamente mientras cargas el código.
 
 ---
 

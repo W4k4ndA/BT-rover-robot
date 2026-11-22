@@ -52,15 +52,16 @@ import com.example.ui.theme.TitaniumBezel
 
 private const val ESP32_SAMPLE_SKETCH = """#include <BluetoothSerial.h>
 BluetoothSerial SerialBT;
-// Pines PWM (4 canales LEDC @ 2000 Hz, 10 bits: 0..1023)
-const int L_FWD = 25, L_REV = 26, R_FWD = 27, R_REV = 14;
+// Dirección (digital) y velocidad (2 canales LEDC @ 2000 Hz, 10 bits)
+const int IN1 = 13, IN2 = 12, IN3 = 14, IN4 = 27;
+const int ENA = 26, ENB = 25;
 
 void setup() {
   SerialBT.begin("ESP32_ROVER");
-  ledcSetup(0, 2000, 10); ledcAttachPin(L_FWD, 0);
-  ledcSetup(1, 2000, 10); ledcAttachPin(L_REV, 1);
-  ledcSetup(2, 2000, 10); ledcAttachPin(R_FWD, 2);
-  ledcSetup(3, 2000, 10); ledcAttachPin(R_REV, 3);
+  pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
+  ledcSetup(0, 2000, 10); ledcAttachPin(ENA, 0);
+  ledcSetup(1, 2000, 10); ledcAttachPin(ENB, 1);
 }
 
 void loop() {
@@ -70,7 +71,7 @@ void loop() {
     if (lIdx >= 0 && rIdx > lIdx) {
       int l = cmd.substring(lIdx + 2, rIdx).toInt();
       int r = cmd.substring(rIdx + 3).toInt();
-      // Mapear -255..255 -> 0..1023 en canales LEDC 0..3
+      // IN1/IN2 + ENA (ch 0) para izq; IN3/IN4 + ENB (ch 1) para der
     }
   }
   // Telemetría cada 1s: SerialBT.printf("BAT:%d,V:%.2f\n", pct, v);
