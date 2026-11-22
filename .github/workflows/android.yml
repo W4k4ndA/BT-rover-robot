@@ -1,0 +1,64 @@
+name: Compilar APK Android (ESP32 Rover)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Generar APK Debug
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Preparar debug.keystore para firma
+        run: |
+          if [ -f debug.keystore.base64 ]; then
+            base64 -d debug.keystore.base64 > debug.keystore
+          else
+            keytool -genkeypair -v -keystore debug.keystore \
+              -storepass android -alias androiddebugkey -keypass android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Configurar Gradle 9.3.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+
+      - name: Ejecutar pruebas unitarias y compilar APK
+        run: gradle :app:testDebugUnitTest :app:assembleDebug
+
+      - name: Subir APK como Artifact del workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp32-rover-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Publicar APK en GitHub Releases (descarga directa en móvil)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-apk
+          name: ESP32 Rover - Último APK
+          body: |
+            APK compilado automáticamente desde el último commit (`${{ github.sha }}`).
+            Descarga `app-debug.apk` directamente desde tu teléfono Android para instalarlo.
+          files: app/build/outputs/apk/debug/app-debug.apk
+          make_latest: true
