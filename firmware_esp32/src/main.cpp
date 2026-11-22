@@ -32,7 +32,6 @@
 
 #include <Arduino.h>
 #include <BluetoothSerial.h>
-#include <esp_arduino_version.h>
 
 // Verifica en tiempo de compilación que el chip tenga Bluetooth Classic habilitado
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
