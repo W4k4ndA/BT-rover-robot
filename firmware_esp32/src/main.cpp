@@ -113,7 +113,7 @@ static constexpr float BATTERY_DIVIDER_FACTOR =
     (DIVIDER_R1_KOHM + DIVIDER_R2_KOHM) / DIVIDER_R2_KOHM;
 
 // Umbrales de voltaje para cálculo de porcentaje (ajusta según tu paquete: 2S vs 3S)
-static constexpr float BATTERY_MIN_VOLTS = 6.40f; // 0% (3.2V por celda en 2S)
+static constexpr float BATTERY_MIN_VOLTS = 6.00f; // 0% (3.0V por celda en 2S)
 static constexpr float BATTERY_MAX_VOLTS = 8.40f; // 100% (4.2V por celda en 2S)
 
 // Intervalo de envío de telemetría hacia la app móvil (ms)
@@ -192,7 +192,7 @@ uint16_t mapAppSpeedTo10BitDuty(int speedMag) {
     const int clamped = (speedMag > APP_MAX_PWM) ? APP_MAX_PWM : speedMag;
     const uint32_t span = PWM_MAX_DUTY - TT_MIN_START_DUTY;
     const uint16_t duty = static_cast<uint16_t>(
-        TT_MIN_START_DUTY + (static_cast<uint32_t>(clamped) * span) / APP_MAX_PWM
+        TT_MIN_START_DUTY + ((static_cast<uint32_t>(clamped) * span) / APP_MAX_PWM)
     );
     return (duty > PWM_MAX_DUTY) ? PWM_MAX_DUTY : duty;
 }
@@ -220,7 +220,10 @@ void driveSingleMotor(int signedSpeed,
 }
 
 /**
- * Actualiza ambos motores del robot y guarda la marca temporal para el watchdog.
+ * Limita y aplica las velocidades recibidas a ambos motores del robot.
+ * Nota: la marca temporal del watchdog (lastCommandMs) no se actualiza aquí,
+ * sino en processBluetoothInput() al recibir una trama válida desde la app,
+ * para evitar que stopAllMotors() reinicie el temporizador del failsafe.
  */
 void applyMotorCommands(int leftSpeed, int rightSpeed) {
     currentLeftCmd  = constrain(leftSpeed, -APP_MAX_PWM, APP_MAX_PWM);
