@@ -71,8 +71,16 @@ Sistema completo de robótica móvil compuesto por una **aplicación móvil Andr
 
 ### Paso 2: Instalar (o compilar) la App Android
 La aplicación ya se encuentra compilada y lista para instalar:
-1. **Desde el repositorio (APK precompilado):** Descarga e instala directamente el archivo [`apk/esp32-rover.apk`](apk/esp32-rover.apk) en tu teléfono Android.
-2. **Desde GitHub Releases:** También puedes descargar la versión más reciente desde el apartado **Releases** de este repositorio en GitHub (*ESP32 Rover - Último APK*).
+1. **Desde GitHub Releases (recomendado, descarga directa):**
+   Descarga el último APK generado automáticamente desde [GitHub Releases (`app-debug.apk`)](https://github.com/W4k4ndA/BT-rover-robot/releases/latest/download/app-debug.apk) o escanea este código QR directamente desde tu teléfono Android:
+
+   <p align="center">
+     <a href="https://github.com/W4k4ndA/BT-rover-robot/releases/latest/download/app-debug.apk">
+       <img src="apk/qr-descarga-apk.png" alt="QR de descarga directa del APK en GitHub Releases" width="220" />
+     </a>
+   </p>
+
+2. **Desde el repositorio (APK precompilado):** También puedes descargar e instalar el archivo [`apk/esp32-rover.apk`](apk/esp32-rover.apk).
 3. **Compilación manual (opcional, desde el código fuente en `app/`):**
    Si deseas compilarla tú mismo, abre el proyecto raíz en Android Studio / AI Studio o ejecuta:
    ```bash
