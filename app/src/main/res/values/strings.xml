@@ -75,6 +75,14 @@
     <string name="protocol_invert_left_desc">Invierte el sentido si la rueda izquierda gira al revés</string>
     <string name="protocol_invert_right_title">Invertir Motor Derecho</string>
     <string name="protocol_invert_right_desc">Invierte el sentido si la rueda derecha gira al revés</string>
+    <string name="protocol_rename_title">NOMBRE DEL ROBOT (BLUETOOTH ESP32)</string>
+    <string name="protocol_rename_hint_connected">Guarda el nuevo nombre en la memoria del ESP32 y lo reinicia. Luego vuelve a vincularlo en Android.</string>
+    <string name="protocol_rename_hint_disconnected">Conéctate primero al ESP32 para enviar y guardar el nuevo nombre en la placa.</string>
+    <string name="protocol_rename_placeholder">Ej. ROVER_JUAN</string>
+    <string name="protocol_rename_button">GUARDAR Y REINICIAR ESP32</string>
+    <string name="protocol_rename_current">Conectado a: %1$s</string>
+    <string name="protocol_rename_sent">Comando enviado (%1$s). Reiniciando ESP32…</string>
+    <string name="protocol_rename_confirmed">Nombre guardado en ESP32: %1$s. Vuelve a conectar al reiniciar.</string>
 
     <!-- Content Descriptions -->
     <string name="cd_bluetooth_icon">Estado de conexión Bluetooth</string>

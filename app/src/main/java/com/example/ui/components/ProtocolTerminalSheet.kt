@@ -15,10 +15,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,12 +30,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,8 +49,10 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.example.R
+import com.example.domain.BluetoothConnectionState
 import com.example.domain.CommandFormatPreset
 import com.example.ui.RoverUiState
 import com.example.ui.theme.ChassisDark
@@ -97,10 +109,14 @@ fun ProtocolTerminalSheet(
     onToggleInvertLeft: (Boolean) -> Unit,
     onToggleInvertRight: (Boolean) -> Unit,
     onSelectSwapLeftRight: (Boolean) -> Unit,
+    onSendDeviceRename: (String) -> Unit,
     onSendStopPing: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val clipboard = LocalClipboardManager.current
+    val connectedState = uiState.connectionState as? BluetoothConnectionState.Connected
+    val isConnected = connectedState != null
+    var robotNameInput by rememberSaveable { mutableStateOf("") }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -300,6 +316,134 @@ fun ProtocolTerminalSheet(
                 onCheckedChange = onToggleInvertRight,
                 testTagName = "switch_invert_right",
             )
+
+            // Persistent ESP32 Bluetooth Name Configuration
+            Text(
+                text = stringResource(R.string.protocol_rename_title),
+                style = MaterialTheme.typography.labelSmall,
+                color = NeonCyan,
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(GunmetalElevated)
+                    .border(
+                        width = 1.dp,
+                        color = if (isConnected) TitaniumBezel else TitaniumBezel.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(12.dp),
+                    )
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Bluetooth,
+                        contentDescription = null,
+                        tint = if (isConnected) NeonLime else TextMuted,
+                    )
+                    Text(
+                        text = if (connectedState != null) {
+                            stringResource(R.string.protocol_rename_current, connectedState.deviceName)
+                        } else {
+                            stringResource(R.string.protocol_rename_hint_disconnected)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isConnected) NeonLime else TextSecondary,
+                    )
+                }
+
+                if (isConnected) {
+                    Text(
+                        text = stringResource(R.string.protocol_rename_hint_connected),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextMuted,
+                    )
+                }
+
+                OutlinedTextField(
+                    value = robotNameInput,
+                    onValueChange = { raw ->
+                        robotNameInput = raw
+                            .filter { it in 'A'..'Z' || it in 'a'..'z' || it in '0'..'9' || it == '_' || it == '-' || it == ' ' }
+                            .take(24)
+                    },
+                    enabled = isConnected,
+                    singleLine = true,
+                    placeholder = {
+                        Text(
+                            text = stringResource(R.string.protocol_rename_placeholder),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextMuted,
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Edit,
+                            contentDescription = null,
+                            tint = if (isConnected) NeonCyan else TextMuted,
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            if (isConnected && robotNameInput.isNotBlank()) {
+                                onSendDeviceRename(robotNameInput)
+                            }
+                        },
+                    ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = NeonCyan,
+                        unfocusedBorderColor = TitaniumBezel,
+                        disabledBorderColor = TitaniumBezel.copy(alpha = 0.4f),
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        disabledTextColor = TextMuted,
+                        focusedContainerColor = ObsidianBg,
+                        unfocusedContainerColor = ObsidianBg,
+                        disabledContainerColor = ObsidianBg.copy(alpha = 0.6f),
+                        cursorColor = NeonCyan,
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("rename_esp32_input"),
+                )
+
+                val canSubmitRename = isConnected && robotNameInput.isNotBlank()
+                MetallicActionButton(
+                    onClick = { onSendDeviceRename(robotNameInput) },
+                    accentColor = if (canSubmitRename) NeonCyan else TitaniumBezel,
+                    enabled = canSubmitRename,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("rename_esp32_button"),
+                ) {
+                    Text(
+                        text = stringResource(R.string.protocol_rename_button),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (canSubmitRename) NeonCyan else TextMuted,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+                    )
+                }
+
+                uiState.renameStatusMessage?.let { statusMsg ->
+                    val statusColor = when {
+                        statusMsg.startsWith("Nombre guardado", ignoreCase = true) -> NeonLime
+                        statusMsg.startsWith("Error", ignoreCase = true) -> NeonCrimson
+                        else -> NeonCyan
+                    }
+                    Text(
+                        text = statusMsg,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = statusColor,
+                        modifier = Modifier.testTag("rename_esp32_status"),
+                    )
+                }
+            }
 
             // Live Serial Console
             Row(

@@ -228,6 +228,7 @@ fun RoverControlScreen(
             onToggleInvertLeft = viewModel::setInvertLeftMotor,
             onToggleInvertRight = viewModel::setInvertRightMotor,
             onSelectSwapLeftRight = viewModel::setSwapLeftRight,
+            onSendDeviceRename = viewModel::sendDeviceRename,
             onSendStopPing = viewModel::triggerEmergencyStop,
         )
     }

@@ -33,6 +33,8 @@
 
 #include <Arduino.h>
 #include <BluetoothSerial.h>
+#include <Preferences.h>
+#include <cctype>
 
 // Verifica en tiempo de compilación que el chip tenga Bluetooth Classic habilitado
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
@@ -133,7 +135,9 @@ static constexpr unsigned long FAILSAFE_TIMEOUT_MS = 1000UL;
 // ============================================================================
 
 BluetoothSerial SerialBT;
+Preferences roverPrefs;
 
+String activeBtDeviceName = BT_DEVICE_NAME;
 String rxBuffer;
 int currentLeftCmd  = 0;
 int currentRightCmd = 0;
@@ -316,6 +320,92 @@ bool parseMotorCommandLine(const String& rawLine, int& outLeft, int& outRight) {
 }
 
 /**
+ * Limpia el nombre Bluetooth recibido para permitir únicamente caracteres ASCII
+ * seguros (letras, dígitos, '_', '-' y espacios) hasta un máximo de 24 caracteres.
+ */
+String sanitizeBluetoothName(const String& rawName) {
+    String clean;
+    for (size_t i = 0; i < rawName.length() && clean.length() < 24; ++i) {
+        const char ch = rawName[i];
+        const bool allowed = std::isalnum(static_cast<unsigned char>(ch)) ||
+                             ch == '_' || ch == '-' || ch == ' ';
+        if (allowed) {
+            clean += ch;
+        }
+    }
+    clean.trim();
+    return clean;
+}
+
+/**
+ * Carga desde la memoria flash no volátil (NVS / Preferences) el nombre Bluetooth
+ * configurado para este robot, usando BT_DEVICE_NAME si aún no se ha personalizado.
+ */
+String loadSavedBluetoothName() {
+    roverPrefs.begin("rover_cfg", true);
+    String stored = roverPrefs.getString("bt_name", BT_DEVICE_NAME);
+    roverPrefs.end();
+
+    String clean = sanitizeBluetoothName(stored);
+    if (clean.length() == 0) {
+        clean = BT_DEVICE_NAME;
+    }
+    return clean;
+}
+
+/**
+ * Procesa comandos de configuración recibidos desde la app Android.
+ * Formato soportado:
+ *   - "NAME:<nuevo_nombre>\n": guarda el nombre en NVS, confirma con "NAME_OK:<nombre>\n"
+ *     y reinicia el ESP32 para anunciar el nuevo nombre Bluetooth.
+ *   - "NAME_RESET\n": restablece el nombre de fábrica ("ESP32_ROVER") y reinicia.
+ */
+bool handleConfigCommand(const String& rawLine) {
+    String line = rawLine;
+    line.trim();
+    if (line.length() == 0) {
+        return false;
+    }
+
+    if (line.equalsIgnoreCase("NAME_RESET")) {
+        stopAllMotors();
+        roverPrefs.begin("rover_cfg", false);
+        roverPrefs.remove("bt_name");
+        roverPrefs.end();
+
+        SerialBT.printf("NAME_OK:%s\n", BT_DEVICE_NAME);
+        SerialBT.flush();
+        Serial.printf("[BT] Nombre restablecido a \"%s\". Reiniciando ESP32...\n", BT_DEVICE_NAME);
+        delay(350);
+        ESP.restart();
+        return true;
+    }
+
+    if (line.startsWith("NAME:")) {
+        const String cleanName = sanitizeBluetoothName(line.substring(5));
+        if (cleanName.length() == 0) {
+            SerialBT.println("NAME_ERR:Nombre invalido");
+            Serial.println("[BT] Comando NAME rechazado (nombre vacío o inválido).");
+            return true;
+        }
+
+        stopAllMotors();
+        roverPrefs.begin("rover_cfg", false);
+        roverPrefs.putString("bt_name", cleanName);
+        roverPrefs.end();
+
+        SerialBT.printf("NAME_OK:%s\n", cleanName.c_str());
+        SerialBT.flush();
+        Serial.printf("[BT] Nombre guardado en NVS: \"%s\". Reiniciando ESP32...\n", cleanName.c_str());
+        delay(350);
+        ESP.restart();
+        return true;
+    }
+
+    return false;
+}
+
+/**
  * Lee caracteres disponibles del buffer SPP sin bloquear el loop principal.
  */
 void processBluetoothInput() {
@@ -325,11 +415,13 @@ void processBluetoothInput() {
             continue;
         }
         if (c == '\n') {
-            int leftVal  = 0;
-            int rightVal = 0;
-            if (parseMotorCommandLine(rxBuffer, leftVal, rightVal)) {
-                applyMotorCommands(leftVal, rightVal);
-                lastCommandMs = millis();
+            if (!handleConfigCommand(rxBuffer)) {
+                int leftVal  = 0;
+                int rightVal = 0;
+                if (parseMotorCommandLine(rxBuffer, leftVal, rightVal)) {
+                    applyMotorCommands(leftVal, rightVal);
+                    lastCommandMs = millis();
+                }
             }
             rxBuffer = "";
         } else {
@@ -441,11 +533,14 @@ void setup() {
     // Garantizar motores completamente detenidos antes de abrir el enlace Bluetooth
     stopAllMotors();
 
+    // Leer nombre personalizado guardado en NVS (o usar ESP32_ROVER por defecto)
+    activeBtDeviceName = loadSavedBluetoothName();
+
     // Iniciar servidor Bluetooth Classic SPP
-    if (!SerialBT.begin(BT_DEVICE_NAME)) {
+    if (!SerialBT.begin(activeBtDeviceName.c_str())) {
         Serial.println("[ERROR] Fallo al inicializar Bluetooth Classic SPP.");
     } else {
-        Serial.printf("[BT] Listo. Empareja y conecta a \"%s\"\n", BT_DEVICE_NAME);
+        Serial.printf("[BT] Listo. Empareja y conecta a \"%s\"\n", activeBtDeviceName.c_str());
         Serial.printf("[LEDC] 2 canales (ENA/ENB) @ %lu Hz, %u bits (duty max = %u)\n",
                       static_cast<unsigned long>(PWM_FREQ_HZ),
                       PWM_RESOLUTION_BITS,

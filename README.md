@@ -89,8 +89,10 @@ Sistema completo de robótica móvil compuesto por una **aplicación móvil Andr
 - **App ➡️ ESP32 (Comandos de motor ~22 Hz + Keepalive 250 ms):**
   - Por defecto: `L:<izq>,R:<der>\n` (ej. `L:210,R:255`, `L:-180,R:180`, `L:0,R:0`).
   - Formatos alternativos configurables en la pestaña **ESP32**: `M:<izq>,<der>`, `<izq>,<der>`, `L<izq> R<der>`.
+  - Configuración Bluetooth persistente (NVS): `NAME:<nuevo_nombre>\n` (guarda el nombre y reinicia el ESP32) y `NAME_RESET\n` (restaura `ESP32_ROVER`).
 - **ESP32 ➡️ App (Telemetría cada 1000 ms):**
   - `BAT:<porcentaje>,V:<voltaje>\n` (ej. `BAT:84,V:7.92`).
+  - Confirmación de renombrado: `NAME_OK:<nombre>\n` o `NAME_ERR:<detalle>\n`.
 
 ---
 

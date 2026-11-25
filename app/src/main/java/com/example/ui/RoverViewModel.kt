@@ -49,6 +49,7 @@ data class RoverUiState(
     val invertLeftMotor: Boolean = false,
     val invertRightMotor: Boolean = false,
     val swapLeftRight: Boolean = false,
+    val renameStatusMessage: String? = null,
 )
 
 /**
@@ -148,6 +149,7 @@ class RoverViewModel(application: Application) : AndroidViewModel(application) {
                         connectionState = connState,
                         battery = clearedBattery,
                         lastRxLine = if (connState is BluetoothConnectionState.Connected) state.lastRxLine else null,
+                        renameStatusMessage = if (connState is BluetoothConnectionState.Connected) null else state.renameStatusMessage,
                     )
                 }
                 if (connState is BluetoothConnectionState.Connected) {
@@ -193,9 +195,20 @@ class RoverViewModel(application: Application) : AndroidViewModel(application) {
             bluetoothManager.incomingLines.collect { line ->
                 appendLog(isTx = false, payload = line)
                 val parsed = TelemetryParser.parseBatteryLine(line)
+                val renameFeedback = when {
+                    line.startsWith("NAME_OK:") -> {
+                        val savedName = line.removePrefix("NAME_OK:").trim()
+                        "Nombre guardado en ESP32: $savedName. Vuelve a emparejar/conectar al reiniciar."
+                    }
+                    line.startsWith("NAME_ERR:") -> {
+                        "Error al renombrar: ${line.removePrefix("NAME_ERR:").trim()}"
+                    }
+                    else -> null
+                }
                 _uiState.update { state ->
                     state.copy(
                         lastRxLine = line,
+                        renameStatusMessage = renameFeedback ?: state.renameStatusMessage,
                         battery = if (parsed != null) {
                             state.battery.copy(
                                 roverPercent = parsed.percent ?: state.battery.roverPercent,
@@ -357,6 +370,27 @@ class RoverViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             preferencesRepository.setSwapLeftRight(swap)
         }
+    }
+
+    fun sendDeviceRename(rawName: String) {
+        val cleanName = rawName
+            .filter { it in 'A'..'Z' || it in 'a'..'z' || it in '0'..'9' || it == '_' || it == '-' || it == ' ' }
+            .trim()
+            .take(24)
+        if (cleanName.isBlank()) return
+        if (_uiState.value.connectionState !is BluetoothConnectionState.Connected) return
+
+        val stopCmd = MotorCommand.stop(_uiState.value.commandFormat)
+        _uiState.update {
+            it.copy(
+                joyX = 0f,
+                joyY = 0f,
+                motorCommand = stopCmd,
+                isTxActive = false,
+                renameStatusMessage = "Comando enviado ($cleanName). Reiniciando ESP32…",
+            )
+        }
+        transmitCommandNow("NAME:$cleanName", forceLog = true)
     }
 
     private fun transmitCommandNow(payload: String, forceLog: Boolean) {
