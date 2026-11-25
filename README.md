@@ -69,12 +69,16 @@ Sistema completo de robótica móvil compuesto por una **aplicación móvil Andr
 3. Verifica en el monitor serial que aparezca:
    `[BT] Listo. Empareja y conecta a "ESP32_ROVER"` y `[LEDC] 2 canales (ENA/ENB) @ 2000 Hz, 10 bits`.
 
-### Paso 2: Compilar e instalar la App Android
-1. Abre el proyecto raíz en Android Studio / AI Studio o compila vía Gradle:
+### Paso 2: Instalar (o compilar) la App Android
+La aplicación ya se encuentra compilada y lista para instalar:
+1. **Desde el repositorio (APK precompilado):** Descarga e instala directamente el archivo [`apk/esp32-rover.apk`](apk/esp32-rover.apk) en tu teléfono Android.
+2. **Desde GitHub Releases:** También puedes descargar la versión más reciente desde el apartado **Releases** de este repositorio en GitHub (*ESP32 Rover - Último APK*).
+3. **Compilación manual (opcional, desde el código fuente en `app/`):**
+   Si deseas compilarla tú mismo, abre el proyecto raíz en Android Studio / AI Studio o ejecuta:
    ```bash
    gradle :app:assembleDebug
    ```
-2. Instala el APK en tu teléfono Android.
+   y luego instala el APK generado en tu dispositivo Android.
 
 ### Paso 3: Emparejar y conducir
 1. En el teléfono, pulsa **CONECTAR BT** en la esquina superior derecha.
