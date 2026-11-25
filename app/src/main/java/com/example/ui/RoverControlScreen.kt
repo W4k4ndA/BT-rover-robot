@@ -225,6 +225,9 @@ fun RoverControlScreen(
             onDismiss = viewModel::closeProtocolSheet,
             onSelectMaxPwm = viewModel::setMaxPwm,
             onSelectFormat = viewModel::setCommandFormat,
+            onToggleInvertLeft = viewModel::setInvertLeftMotor,
+            onToggleInvertRight = viewModel::setInvertRightMotor,
+            onSelectSwapLeftRight = viewModel::setSwapLeftRight,
             onSendStopPing = viewModel::triggerEmergencyStop,
         )
     }

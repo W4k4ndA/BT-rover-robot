@@ -21,7 +21,7 @@ Sistema completo de robótica móvil compuesto por una **aplicación móvil Andr
   - **Estética Futurista Neón + Metálica**: Tipografía técnica (*Orbitron*, *Rajdhani*, *JetBrains Mono*), biseles en titanio cepillado, retícula táctica y retroalimentación háptica con retorno elástico al soltar.
   - **Botón de Conexión Bluetooth (`CONECTAR BT`)**: Gestiona permisos de Android 11/12+, lista dispositivos emparejados (destacando módulos ESP32) y escanea dispositivos cercanos.
   - **Indicador de Batería en Tiempo Real**: Barra neón segmentada que muestra la telemetría enviada por el ESP32 (`BAT:xx,V:x.xx`) junto al nivel de batería del teléfono.
-  - **Consola Serial & Modos de Potencia**: Selector `50% ECO`, `75% SPORT`, `100% TURBO`, botón de paro de emergencia (**PARO**) y visor TX/RX en vivo.
+  - **Consola ESP32, Calibración & Modos de Potencia**: Selector `50% ECO`, `75% SPORT`, `100% TURBO`, botón de paro de emergencia (**PARO**), visor TX/RX en vivo y calibración por software para **invertir el giro de cada motor** e **intercambiar el motor izquierdo/derecho** sin tocar el cableado.
 
 - 🧠 **Firmware ESP32 PlatformIO (`firmware_esp32/`)**:
   - **Driver LEDC por Hardware**: 2 canales PWM independientes (`0` y `1`) para `ENA`/`ENB` a **2000 Hz** y **10 bits de resolución (`0..1023`)**, junto a 4 pines digitales (`IN1..IN4`) para controlar el sentido de giro de motores TT en puente H L298N.

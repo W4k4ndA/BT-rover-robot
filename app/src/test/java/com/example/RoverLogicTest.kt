@@ -94,6 +94,48 @@ class RoverLogicTest {
     }
 
     @Test
+    fun `inverting left or right motor flips only that channel`() {
+        val leftInverted = DifferentialDriveCalculator.calculate(
+            joyX = 0f,
+            joyY = 1f,
+            invertLeftMotor = true,
+        )
+        assertEquals(-255, leftInverted.leftSpeed)
+        assertEquals(255, leftInverted.rightSpeed)
+        assertEquals("L:-255,R:255", leftInverted.formattedString)
+
+        val rightInverted = DifferentialDriveCalculator.calculate(
+            joyX = 0f,
+            joyY = 1f,
+            invertRightMotor = true,
+        )
+        assertEquals(255, rightInverted.leftSpeed)
+        assertEquals(-255, rightInverted.rightSpeed)
+        assertEquals("L:255,R:-255", rightInverted.formattedString)
+    }
+
+    @Test
+    fun `swapping left and right routes logical sides to opposite output channels and preserves physical inversion`() {
+        val swappedForwardLeft = DifferentialDriveCalculator.calculate(
+            joyX = -0.5f,
+            joyY = 0.7f,
+            swapLeftRight = true,
+        )
+        // Normalmente izquierda < derecha; al intercambiar canales, el canal L recibe la velocidad derecha
+        assertTrue(swappedForwardLeft.leftSpeed > swappedForwardLeft.rightSpeed)
+
+        val swappedAndPhysicalLeftInverted = DifferentialDriveCalculator.calculate(
+            joyX = 0f,
+            joyY = 1f,
+            invertLeftMotor = true,
+            swapLeftRight = true,
+        )
+        // La inversión del motor izquierdo físico debe salir por el canal R cuando L y R están intercambiados
+        assertEquals(255, swappedAndPhysicalLeftInverted.leftSpeed)
+        assertEquals(-255, swappedAndPhysicalLeftInverted.rightSpeed)
+    }
+
+    @Test
     fun `joystick inside deadzone stops both motors`() {
         val cmd = DifferentialDriveCalculator.calculate(
             joyX = 0.03f,

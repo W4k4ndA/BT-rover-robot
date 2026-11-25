@@ -64,6 +64,17 @@
     <string name="protocol_log_title">REGISTRO SERIAL EN VIVO</string>
     <string name="protocol_test_ping">ENVIAR PING DE PARO</string>
     <string name="protocol_arduino_title">CÓDIGO DE REFERENCIA ESP32-WROOM-32</string>
+    <string name="protocol_motor_calibration_title">CALIBRACIÓN DE MOTORES (SOFTWARE)</string>
+    <string name="protocol_motor_mapping_label">ASIGNACIÓN IZQUIERDO / DERECHO</string>
+    <string name="protocol_motor_mapping_hint">Define qué salida del ESP32 mueve cada rueda si quedaron cruzadas en el puente H.</string>
+    <string name="protocol_mapping_normal">L → IZQ · R → DER</string>
+    <string name="protocol_mapping_normal_sub">Estándar</string>
+    <string name="protocol_mapping_swapped">L → DER · R → IZQ</string>
+    <string name="protocol_mapping_swapped_sub">Intercambiado</string>
+    <string name="protocol_invert_left_title">Invertir Motor Izquierdo</string>
+    <string name="protocol_invert_left_desc">Invierte el sentido si la rueda izquierda gira al revés</string>
+    <string name="protocol_invert_right_title">Invertir Motor Derecho</string>
+    <string name="protocol_invert_right_desc">Invierte el sentido si la rueda derecha gira al revés</string>
 
     <!-- Content Descriptions -->
     <string name="cd_bluetooth_icon">Estado de conexión Bluetooth</string>

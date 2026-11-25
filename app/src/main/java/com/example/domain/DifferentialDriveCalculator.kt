@@ -30,6 +30,9 @@ object DifferentialDriveCalculator {
         powerMultiplier: Float = 1.0f,
         format: CommandFormatPreset = CommandFormatPreset.L_R_COLON,
         deadzone: Float = 0.08f,
+        invertLeftMotor: Boolean = false,
+        invertRightMotor: Boolean = false,
+        swapLeftRight: Boolean = false,
     ): MotorCommand {
         val clampedX = joyX.coerceIn(-1f, 1f)
         val clampedY = joyY.coerceIn(-1f, 1f)
@@ -70,10 +73,19 @@ object DifferentialDriveCalculator {
         val leftPwm = (leftMix * scale).roundToInt().coerceIn(-maxPwm, maxPwm)
         val rightPwm = (rightMix * scale).roundToInt().coerceIn(-maxPwm, maxPwm)
 
+        // Aplicamos primero la inversión sobre los motores físicos (izq/der)
+        // y luego el intercambio de canales L/R para que "Invertir Motor Izquierdo"
+        // siempre actúe sobre la rueda izquierda física aunque los canales estén cruzados.
+        val adjustedLeft = if (invertLeftMotor) -leftPwm else leftPwm
+        val adjustedRight = if (invertRightMotor) -rightPwm else rightPwm
+
+        val finalLeft = if (swapLeftRight) adjustedRight else adjustedLeft
+        val finalRight = if (swapLeftRight) adjustedLeft else adjustedRight
+
         return MotorCommand(
-            leftSpeed = leftPwm,
-            rightSpeed = rightPwm,
-            formattedString = format.format(leftPwm, rightPwm),
+            leftSpeed = finalLeft,
+            rightSpeed = finalRight,
+            formattedString = format.format(finalLeft, finalRight),
         )
     }
 }

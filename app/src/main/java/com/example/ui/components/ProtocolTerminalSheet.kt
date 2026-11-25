@@ -19,11 +19,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.SwapHoriz
+import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -41,6 +45,7 @@ import com.example.domain.CommandFormatPreset
 import com.example.ui.RoverUiState
 import com.example.ui.theme.ChassisDark
 import com.example.ui.theme.GunmetalElevated
+import com.example.ui.theme.NeonAmber
 import com.example.ui.theme.NeonCrimson
 import com.example.ui.theme.NeonCyan
 import com.example.ui.theme.NeonLime
@@ -89,6 +94,9 @@ fun ProtocolTerminalSheet(
     onDismiss: () -> Unit,
     onSelectMaxPwm: (Int) -> Unit,
     onSelectFormat: (CommandFormatPreset) -> Unit,
+    onToggleInvertLeft: (Boolean) -> Unit,
+    onToggleInvertRight: (Boolean) -> Unit,
+    onSelectSwapLeftRight: (Boolean) -> Unit,
     onSendStopPing: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -208,6 +216,91 @@ fun ProtocolTerminalSheet(
                 color = NeonLime,
             )
 
+            // Motor Software Calibration Section (Inversion & Left/Right Channel Swap)
+            Text(
+                text = stringResource(R.string.protocol_motor_calibration_title),
+                style = MaterialTheme.typography.labelSmall,
+                color = NeonCyan,
+            )
+            Text(
+                text = stringResource(R.string.protocol_motor_mapping_label),
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                listOf(false, true).forEach { isSwappedOption ->
+                    val selected = uiState.swapLeftRight == isSwappedOption
+                    val accent = if (selected) {
+                        if (isSwappedOption) NeonAmber else NeonCyan
+                    } else {
+                        TitaniumBezel
+                    }
+                    MetallicActionButton(
+                        onClick = { onSelectSwapLeftRight(isSwappedOption) },
+                        accentColor = accent,
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag(if (isSwappedOption) "motor_mapping_swapped" else "motor_mapping_normal"),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.SwapHoriz,
+                                    contentDescription = null,
+                                    tint = if (selected) accent else TextSecondary,
+                                )
+                                Text(
+                                    text = stringResource(
+                                        if (isSwappedOption) R.string.protocol_mapping_swapped
+                                        else R.string.protocol_mapping_normal,
+                                    ),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (selected) accent else TextPrimary,
+                                )
+                            }
+                            Text(
+                                text = stringResource(
+                                    if (isSwappedOption) R.string.protocol_mapping_swapped_sub
+                                    else R.string.protocol_mapping_normal_sub,
+                                ),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextMuted,
+                            )
+                        }
+                    }
+                }
+            }
+            Text(
+                text = stringResource(R.string.protocol_motor_mapping_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = TextMuted,
+            )
+
+            MotorInvertToggleRow(
+                title = stringResource(R.string.protocol_invert_left_title),
+                subtitle = stringResource(R.string.protocol_invert_left_desc),
+                checked = uiState.invertLeftMotor,
+                onCheckedChange = onToggleInvertLeft,
+                testTagName = "switch_invert_left",
+            )
+            MotorInvertToggleRow(
+                title = stringResource(R.string.protocol_invert_right_title),
+                subtitle = stringResource(R.string.protocol_invert_right_desc),
+                checked = uiState.invertRightMotor,
+                onCheckedChange = onToggleInvertRight,
+                testTagName = "switch_invert_right",
+            )
+
             // Live Serial Console
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -301,5 +394,67 @@ fun ProtocolTerminalSheet(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun MotorInvertToggleRow(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    testTagName: String,
+) {
+    val borderColor = if (checked) NeonAmber else TitaniumBezel
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .minimumInteractiveComponentSize()
+            .clip(RoundedCornerShape(10.dp))
+            .background(GunmetalElevated)
+            .border(1.dp, borderColor, RoundedCornerShape(10.dp))
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .testTag("${testTagName}_row"),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Sync,
+                contentDescription = null,
+                tint = if (checked) NeonAmber else TextSecondary,
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (checked) NeonAmber else TextPrimary,
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextMuted,
+                )
+            }
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            modifier = Modifier.testTag(testTagName),
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = ObsidianBg,
+                checkedTrackColor = NeonAmber,
+                uncheckedThumbColor = TextSecondary,
+                uncheckedTrackColor = ChassisDark,
+                uncheckedBorderColor = TitaniumBezel,
+            ),
+        )
     }
 }

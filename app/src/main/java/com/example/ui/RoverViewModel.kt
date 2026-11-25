@@ -46,6 +46,9 @@ data class RoverUiState(
     val isTxActive: Boolean = false,
     val isBluetoothSheetOpen: Boolean = false,
     val isProtocolSheetOpen: Boolean = false,
+    val invertLeftMotor: Boolean = false,
+    val invertRightMotor: Boolean = false,
+    val swapLeftRight: Boolean = false,
 )
 
 /**
@@ -111,12 +114,18 @@ class RoverViewModel(application: Application) : AndroidViewModel(application) {
                         maxPwm = prefs.maxPwm,
                         powerMultiplier = prefs.powerMode.multiplier,
                         format = prefs.commandFormat,
+                        invertLeftMotor = prefs.invertLeftMotor,
+                        invertRightMotor = prefs.invertRightMotor,
+                        swapLeftRight = prefs.swapLeftRight,
                     )
                     state.copy(
                         maxPwm = prefs.maxPwm,
                         commandFormat = prefs.commandFormat,
                         powerMode = prefs.powerMode,
                         lastDeviceAddress = prefs.lastDeviceAddress,
+                        invertLeftMotor = prefs.invertLeftMotor,
+                        invertRightMotor = prefs.invertRightMotor,
+                        swapLeftRight = prefs.swapLeftRight,
                         motorCommand = updatedCmd,
                     )
                 }
@@ -271,6 +280,9 @@ class RoverViewModel(application: Application) : AndroidViewModel(application) {
             maxPwm = current.maxPwm,
             powerMultiplier = current.powerMode.multiplier,
             format = current.commandFormat,
+            invertLeftMotor = current.invertLeftMotor,
+            invertRightMotor = current.invertRightMotor,
+            swapLeftRight = current.swapLeftRight,
         )
 
         _uiState.update {
@@ -326,6 +338,24 @@ class RoverViewModel(application: Application) : AndroidViewModel(application) {
     fun setCommandFormat(format: CommandFormatPreset) {
         viewModelScope.launch {
             preferencesRepository.setCommandFormat(format)
+        }
+    }
+
+    fun setInvertLeftMotor(invert: Boolean) {
+        viewModelScope.launch {
+            preferencesRepository.setInvertLeftMotor(invert)
+        }
+    }
+
+    fun setInvertRightMotor(invert: Boolean) {
+        viewModelScope.launch {
+            preferencesRepository.setInvertRightMotor(invert)
+        }
+    }
+
+    fun setSwapLeftRight(swap: Boolean) {
+        viewModelScope.launch {
+            preferencesRepository.setSwapLeftRight(swap)
         }
     }
 
