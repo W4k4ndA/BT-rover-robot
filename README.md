@@ -76,7 +76,7 @@ La aplicación ya se encuentra compilada y lista para instalar:
 
    <p align="center">
      <a href="https://github.com/W4k4ndA/BT-rover-robot/releases/latest/download/app-debug.apk">
-       <img src="apk/qr-descarga-apk.png" alt="QR de descarga directa del APK en GitHub Releases" width="220" />
+       <img src="qr-descarga-apk.png" alt="QR de descarga directa del APK en GitHub Releases" width="220" />
      </a>
    </p>
 
